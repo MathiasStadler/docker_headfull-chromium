@@ -48,12 +48,17 @@ RUN mkdir $RUST_PROJECT_DIR && \
 cargo init $RUST_PROJECT_DIR && \
 cd $RUST_PROJECT_DIR && \
 cargo add tokio && \
+cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract && \
 cargo build && \
 cargo run
 
-# copy
-COPY ./src/tokio_finviz.rs /home/default_user/rust_work_space/tokio_finviz_shortput/src/tokio_finviz.rs 
 
+
+RUN cd $RUST_PROJECT_DIR && \
+mkdir ./examples
+
+# copy
+COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs 
 
 # add new entry to file e.g. Cargo.toml
 RUN tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<EOT
@@ -61,6 +66,12 @@ RUN tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml >
 [[example]]
 name = "tokio_finviz"
 EOT
+
+
+# compile
+ 
+#RUN cd $RUST_PROJECT_DIR && \
+#cargo build --example tokio_finviz
 
 # install google_chrome , chromedriver and xvfb
 

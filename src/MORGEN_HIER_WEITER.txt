@@ -1,0 +1,10 @@
+# works chrome
+#from folder ./Launching_Chrome_Docker_container
+docker run --rm -it  -e DISPLAY=:0 -v /tmp/.X11-unix:/tmp/.X11-unix docker_chrome_23_10:latest
+
+
+FROM ubuntu:23_10
+
+dockerfile_rust
+
+many dockerfile many to on container
