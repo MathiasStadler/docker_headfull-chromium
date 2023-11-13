@@ -1,0 +1,4 @@
+# FROM HERE
+# https://github.com/piercefreeman/docker/blob/main/headfull-chromium/Dockerfile
+
+FROM ubuntu:23.10
