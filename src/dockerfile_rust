@@ -42,12 +42,14 @@ USER default_user
 # change to home_directory
 RUN cd && \ 
 mkdir rust_work_space && \
-cd $_ && \
-mkdir ./tokio_finviz_shortput && \
-cd $_ && \
-cargo init . && \
+cd $_
+ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput 
+RUN mkdir $RUST_PROJECT_DIR && \
+cargo init $RUST_PROJECT_DIR && \
+cd $RUST_PROJECT_DIR && \
 cargo add tokio && \
-cargo build
+cargo build && \
+cargo run
 
 
 
