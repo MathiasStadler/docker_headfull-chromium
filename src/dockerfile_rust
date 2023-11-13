@@ -51,5 +51,10 @@ cargo add tokio && \
 cargo build && \
 cargo run
 
+# copy
+COPY ./src/tokio_finviz.rs /home/default_user/rust_work_space/tokio_finviz_shortput/src/tokio_finviz.rs 
+
+# install google_chrome , chromedriver and xvfb
+
 
 
