@@ -3,28 +3,18 @@ FROM ubuntu:23.10
 RUN apt-get update
 
 # Install => one layer
-# RUN apt-get install --no-install-recommends --yes wget ca-certificates gnupg
-RUN apt-get install --yes wget ca-certificates gnupg sudo
-
-# RUN apt-get install --no-install-recommends -y gnupg
+RUN apt-get install --no-install-recommends --yes wget ca-certificates gnupg sudo
 
 # Set the Chrome repo.
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
 
 # Install Chrome.
-# RUN apt-get update && apt-get --no-install-recommends --yes install google-chrome-stable
-RUN apt-get update && apt-get --yes install google-chrome-stable
+RUN apt-get update && apt-get --no-install-recommends --yes install google-chrome-stable
 
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# chrome message -no-sandbox not supported
-# ENTRYPOINT ["google-chrome","--no-sandbox"]
-
-# RUN useradd -m -d /home/default_user default_user
-
-
+#create user
 ARG USERNAME=default_user
 ARG USER_UID=1999
 ARG USER_GID=$USER_UID
@@ -36,9 +26,6 @@ RUN adduser $USERNAME sudo
 
 # start services
 RUN update-rc.d dbus enable
-
-# change permission of google-chrome FROM HERE https://stackoverflow.com/questions/60749235/trying-to-use-posix-spawn-to-create-other-processes-but-get-a-permission-deni
-# RUN chmod 0744  /etc/default/google-chrome
 
 # USER default_user
 USER $USERNAME
