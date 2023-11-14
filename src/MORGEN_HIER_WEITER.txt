@@ -7,4 +7,4 @@ FROM ubuntu:23_10
 
 dockerfile_rust
 
-many dockerfile many to on container
+many dockerfile many to one container
