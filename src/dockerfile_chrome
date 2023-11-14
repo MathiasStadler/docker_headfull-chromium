@@ -45,4 +45,4 @@ RUN update-rc.d dbus enable
 # USER default_user
 USER $USERNAME
 
-# ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
+ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
