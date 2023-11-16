@@ -8,3 +8,10 @@ FROM ubuntu:23_10
 dockerfile_rust
 
 many dockerfile many to one container
+
+# chrome driver inside docker
+wget https://chromedriver.storage.googleapis.com/92.0.4515.107/chromedriver_linux64.zip
+
+google-chrome  --product-version
+
+wget https://chromedriver.storage.googleapis.com/$(google-chrome  --product-version)/chromedriver_linux64.zip

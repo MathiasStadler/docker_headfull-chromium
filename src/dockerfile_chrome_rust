@@ -42,6 +42,8 @@ RUN set -eux; \
     rustup self update; \
     rustup update;
 
+    # add rust project
+
 #create user
 ARG USERNAME=default_user
 ARG USER_UID=1999
@@ -56,5 +58,49 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # USER default_user
 USER $USERNAME
+
+# # add rust demo project
+# init cargo project
+# change to home_directory
+RUN cd && \ 
+mkdir rust_work_space && \
+cd $_
+ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput 
+RUN mkdir $RUST_PROJECT_DIR && \
+cargo init $RUST_PROJECT_DIR && \
+cd $RUST_PROJECT_DIR && \
+cargo add tokio && \
+cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract && \
+cargo build && \
+cargo run
+
+RUN cd $RUST_PROJECT_DIR && \
+mkdir ./examples
+
+# copy
+COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs 
+
+# add new entry to file e.g. Cargo.toml
+RUN tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<EOT
+#
+[[example]]
+name = "tokio_finviz"
+EOT
+
+RUN cd $RUST_PROJECT_DIR \
+cargo build --example tokio_finviz
+
+
+# downloan chromedriver
+# FROM HERE
+# https://gist.github.com/varyonic/dea40abcf3dd891d204ef235c6e8dd79
+
+ENV CHROMEDRIVER_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
+ENV CHROMEDRIVER_DIR = ./chromedriver
+RUN mkdir $CHROMEDRIVER_DIR
+RUN wget -q --continue -P $CHROMEDRIVER_DIR "http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
+# RUN unzip $CHROMEDRIVER_DIR/chromedriver* -d $CHROMEDRIVER_DIR
+
+
 
 ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
