@@ -13,13 +13,20 @@ RUN apt-get update \
     && apt-get install --no-install-recommends --yes  ca-certificates \
     gnupg \
     sudo \
-    wget \ 
-    ca-certificates \
-    build-essential \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    wget \
+    build-essential 
+
+# install chrome
+# RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+#    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+#    && apt-get install --no-install-recommends --yes google-chrome-stable \
+#    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN curl -s https://dl-ssl.google.com/linux/linux_signing_key.pub | | sudo gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/linux_signing_key.pub --import \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get install --no-install-recommends --yes google-chrome-stable \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 # install rust
 ENV RUSTUP_HOME=/usr/local/rustup \
