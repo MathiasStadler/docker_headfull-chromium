@@ -7,6 +7,7 @@ RUN apt-get update \
     ca-certificates \
     wget \
     gnupg \
+    unzip \
     # change to root
     sudo \
     build-essential \
@@ -64,8 +65,8 @@ ENV DOWNLOAD_DIR=/DOWNLOAD
 
 RUN mkdir ${CHROMEDRIVER_DIR}
 RUN mkdir ${DOWNLOAD_DIR} 
-RUN cd ${DOWNLOAD_DIR} 
-RUN curl --output chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
+# RUN cd ${DOWNLOAD_DIR} 
+RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
 RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
 
 
@@ -116,20 +117,5 @@ EOT
 
 RUN cd $RUST_PROJECT_DIR \
     cargo build --example tokio_finviz
-
-
-# downloan chromedriver
-# FROM HERE
-# https://gist.github.com/varyonic/dea40abcf3dd891d204ef235c6e8dd79
-
-ENV CHROMEDRIVER_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
-ENV CHROMEDRIVER_DIR = ./chromedriver
-ENV DOWNLOAD_DIR=/DOWNLOAD
-
-RUN mkdir ${CHROMEDRIVER_DIR} && mkdir ${DOWNLOAD_DIR}
-RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
-RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
-
-
 
 ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
