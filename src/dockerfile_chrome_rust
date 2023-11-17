@@ -124,9 +124,11 @@ RUN cd $RUST_PROJECT_DIR \
 
 ENV CHROMEDRIVER_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
 ENV CHROMEDRIVER_DIR = ./chromedriver
-RUN mkdir $CHROMEDRIVER_DIR
-RUN wget -q --continue -P $CHROMEDRIVER_DIR "http://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
-# RUN unzip $CHROMEDRIVER_DIR/chromedriver* -d $CHROMEDRIVER_DIR
+ENV DOWNLOAD_DIR=/DOWNLOAD
+
+RUN mkdir ${CHROMEDRIVER_DIR} && mkdir ${DOWNLOAD_DIR}
+RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
+RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
 
 
 
