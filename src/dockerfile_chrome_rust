@@ -1,18 +1,27 @@
 FROM ubuntu:23.10
 
 # Install chrome => one layer
-RUN apt-get update \
-    && apt-get install --no-install-recommends --yes wget ca-certificates gnupg sudo \
+RUN set -eux; \
+    apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests --yes wget \
+    # ca certificate for https
+    ca-certificates \
+    gnupg \
+    # change to root
+    sudo \
+    build-essential \
     # Set the Chrome repo.
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
-    &&  apt-get update && apt-get --no-install-recommends --yes install google-chrome-stable \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
+    && apt-get clean \ 
+    && rm -rf /var/lib/apt/lists/*
 
 # install rust
 # install wget , ssl certificate for https  and cc linker
-RUN apt update && apt install --no-install-recommends -y wget ca-certificates build-essential
+# RUN apt update && apt install --no-install-recommends -y wget ca-certificates build-essential
 
 # install rust
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -23,11 +32,11 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
     case "${dpkgArch##*-}" in \
-        amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
-        armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='f21c44b01678c645d8fbba1e55e4180a01ac5af2d38bcbd14aa665e0d96ed69a' ;; \
-        arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
-        i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='e7b0f47557c1afcd86939b118cbcf7fb95a5d1d917bdd355157b63ca00fc4333' ;; \
-        *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
+    amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
+    armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='f21c44b01678c645d8fbba1e55e4180a01ac5af2d38bcbd14aa665e0d96ed69a' ;; \
+    arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
+    i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='e7b0f47557c1afcd86939b118cbcf7fb95a5d1d917bdd355157b63ca00fc4333' ;; \
+    *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
     esac; \
     url="https://static.rust-lang.org/rustup/archive/1.26.0/${rustArch}/rustup-init"; \
     wget "$url"; \
@@ -42,7 +51,23 @@ RUN set -eux; \
     rustup self update; \
     rustup update;
 
-    # add rust project
+# install chromedriver
+
+# DOUPLE
+#RUN apt update \
+#&& apt-get install --no-install-recommends --no-install-suggests --yes wget unzip curl ca-certificates\
+#&& apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
+ENV CHROMEDRIVER_DIR=/chromedriver
+ENV DOWNLOAD_DIR=/DOWNLOAD
+
+RUN mkdir ${CHROMEDRIVER_DIR} && mkdir ${DOWNLOAD_DIR}
+RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
+RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
+
+
+# add rust project
 
 #create user
 ARG USERNAME=default_user
@@ -59,23 +84,23 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # USER default_user
 USER $USERNAME
 
-# # add rust demo project
+# add rust demo project
 # init cargo project
 # change to home_directory
 RUN cd && \ 
-mkdir rust_work_space && \
-cd $_
+    mkdir rust_work_space && \
+    cd $_
 ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput 
 RUN mkdir $RUST_PROJECT_DIR && \
-cargo init $RUST_PROJECT_DIR && \
-cd $RUST_PROJECT_DIR && \
-cargo add tokio && \
-cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract && \
-cargo build && \
-cargo run
+    cargo init $RUST_PROJECT_DIR && \
+    cd $RUST_PROJECT_DIR && \
+    cargo add tokio && \
+    cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract && \
+    cargo build && \
+    cargo run
 
 RUN cd $RUST_PROJECT_DIR && \
-mkdir ./examples
+    mkdir ./examples
 
 # copy
 COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs 
@@ -88,7 +113,7 @@ name = "tokio_finviz"
 EOT
 
 RUN cd $RUST_PROJECT_DIR \
-cargo build --example tokio_finviz
+    cargo build --example tokio_finviz
 
 
 # downloan chromedriver
