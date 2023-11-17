@@ -9,7 +9,7 @@ RUN apt update \
 
 # ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
 # ENV CHROME_VERSION=119
-ENV CHROMEDRIVER_DIR=./chromedriver
+ENV CHROMEDRIVER_DIR=/chromedriver
 RUN mkdir $CHROMEDRIVER_DIR
 # RUN cd $CHROMEDRIVER_DIR
 
@@ -21,4 +21,4 @@ RUN mkdir $CHROMEDRIVER_DIR
 #RUN ["wget","-P $CHROMEDRIVER_DIR", "-O chromedriver-linux64.zip","https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip" ]
 # RUN unzip $CHROMEDRIVER_DIR/chromedriver* -d $CHROMEDRIVER_DIR
 # RUN bash -c wget -P $CHROMEDRIVER_DIR -O chromedriver-linux64.zip https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip
-RUN curl --output chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
+RUN curl --output ${CHROMEDRIVER_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
