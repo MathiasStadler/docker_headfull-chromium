@@ -1,11 +1,11 @@
 FROM ubuntu:23.10
 
 # Install chrome => one layer
-RUN set -eux; \
-    apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests --yes wget \
+RUN apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests --yes curl \
     # ca certificate for https
     ca-certificates \
+    wget \
     gnupg \
     # change to root
     sudo \
@@ -62,8 +62,10 @@ RUN set -eux; \
 ENV CHROMEDRIVER_DIR=/chromedriver
 ENV DOWNLOAD_DIR=/DOWNLOAD
 
-RUN mkdir ${CHROMEDRIVER_DIR} && mkdir ${DOWNLOAD_DIR}
-RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
+RUN mkdir ${CHROMEDRIVER_DIR}
+RUN mkdir ${DOWNLOAD_DIR} 
+RUN cd ${DOWNLOAD_DIR} 
+RUN curl --output chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
 RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
 
 
