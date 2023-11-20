@@ -1,0 +1,5 @@
+DOCKER_BUILDKIT=1 docker buildx build . -t my_ubuntu_chrome_rust_3 -f ./src/dockerfile_chrome_rust
+
+# make all clean
+# setup buildx make sure you’re setup with buildkit - https://docs.docker.com/build/buildkit/ - https://docs.docker.com/build/
+# only current package - 11.2023

@@ -1,7 +1,9 @@
+# syntax=docker/dockerfile:1.6.0
 FROM ubuntu:23.10
 
 # Install chrome => one layer
-RUN apt-get update \
+RUN set -e, -u, -x, -o pipefail; \
+    && apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests --yes curl \
     ca-certificates # ca certificate for https\
     wget \
@@ -19,8 +21,9 @@ RUN apt-get update \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
     && apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
-    && apt-get clean \ 
+    && apt-get install --yes --no-install-recommends --no-install-suggests  google-chrome-stable \
+    && apt-get --yes autoremove \
+    && apt-get --yes clean \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -30,7 +33,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.73.0
 
-RUN set -eux; \
+RUN set -e, -u, -x, -o pipefail; \
     dpkgArch="$(dpkg --print-architecture)"; \
     case "${dpkgArch##*-}" in \
     amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
@@ -46,19 +49,19 @@ RUN set -eux; \
     ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
     rm rustup-init; \
     chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
-    rustup --version; \
-    cargo --version; \
-    rustc --version; \
+    # rustup --version; \
+    # cargo --version; \
+    # rustc --version; \
     rustup self update; \
     rustup update;
 
 # install chromedriver
 
 # ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
-ENV CHROMEDRIVER_DIR=/chromedriver
-ENV DOWNLOAD_DIR=/DOWNLOAD
+ENV CHROMEDRIVER_DIR=/chromedriver \
+    DOWNLOAD_DIR=/DOWNLOAD
 
-RUN set -eux; \ 
+RUN set -e, -u, -x, -o pipefail; \ 
     mkdir ${CHROMEDRIVER_DIR} \
     && mkdir ${DOWNLOAD_DIR} \ 
     && curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip" \
@@ -68,11 +71,11 @@ RUN set -eux; \
 
 
 #create user
-ARG USER_NAME=default_user
-ARG USER_UID=1999
-ARG USER_GID=$USER_UID
+ARG USER_NAME=default_user \
+    USER_UID=1999 \
+    USER_GID=$USER_UID
 
-RUN set -eux; \
+RUN set -e, -u, -x, -o pipefail; \
     && groupadd --gid $USER_GID $USER_NAME \
     && useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME -m $USER_NAME \
     && echo "$USER_NAME:$USER_NAME" | chpasswd \
@@ -87,7 +90,7 @@ USER $USER_NAME
 ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput
 # init cargo project
 # change to home_directory
-RUN set -eux; \
+RUN set -e, -u, -x, -o pipefail; \
     &&  mkdir /home/$USER_NAME/rust_work_space \
     &&  cd $_ \
     &&  mkdir $RUST_PROJECT_DIR  \
@@ -104,12 +107,22 @@ RUN set -eux; \
 COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs 
 
 # add new entry to file e.g. Cargo.toml
-RUN set -eux; \
-    && tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<EOT
+# RUN tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<-"EOT" bash
+# set -e, -u, -x ;
+#
+# [[example]]
+# name = "tokio_finviz"
+# EOT 
+
+# FROM HERE
+# https://www.docker.com/blog/introduction-to-heredocs-in-dockerfiles/
+COPY <<EOF $RUST_PROJECT_DIR/Cargo.toml
 #
 [[example]]
 name = "tokio_finviz"
-EOT \
+EOF
+
+RUN RUN set -e, -u, -x, -o pipefail; \
 && cd $RUST_PROJECT_DIR \
 && cargo build --example tokio_finviz
 
