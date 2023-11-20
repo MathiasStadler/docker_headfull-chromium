@@ -3,32 +3,26 @@ FROM ubuntu:23.10
 # Install chrome => one layer
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests --yes curl \
-    # ca certificate for https
-    ca-certificates \
+    ca-certificates # ca certificate for https\
     wget \
     gnupg \
     unzip \
-    # change to root
-    sudo \
+    sudo # change to root\
     build-essential \
     libx11-xcb1  # nessery for chrome \
     libgl1-mesa-dri # nessery for chrome too \
     libcanberra-gtk-module # nessery for chrome too \
-    libasound2 \
+    libasound2 # sound out of docker\
     init-system-helpers # nessery update-rc.d \
     # Set the Chrome repo.
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
     && apt-get update \
-    # && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
-    && apt-get install --yes google-chrome-stable \
+    && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
     && apt-get clean \ 
     && rm -rf /var/lib/apt/lists/*
 
-# install rust
-# install wget , ssl certificate for https  and cc linker
-# RUN apt update && apt install --no-install-recommends -y wget ca-certificates build-essential
 
 # install rust
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -60,71 +54,67 @@ RUN set -eux; \
 
 # install chromedriver
 
-# DOUPLE
-#RUN apt update \
-#&& apt-get install --no-install-recommends --no-install-suggests --yes wget unzip curl ca-certificates\
-#&& apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
 ENV CHROMEDRIVER_DIR=/chromedriver
 ENV DOWNLOAD_DIR=/DOWNLOAD
 
-RUN mkdir ${CHROMEDRIVER_DIR}
-RUN mkdir ${DOWNLOAD_DIR} 
-# RUN cd ${DOWNLOAD_DIR} 
-RUN curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip"
-RUN unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
+RUN set -eux; \ 
+    mkdir ${CHROMEDRIVER_DIR} \
+    && mkdir ${DOWNLOAD_DIR} \ 
+    && curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip" \
+    && unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
 
 
-# add rust project
+
 
 #create user
-ARG USERNAME=default_user
+ARG USER_NAME=default_user
 ARG USER_UID=1999
 ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID --password $USERNAME -m $USERNAME \
-    && echo "$USERNAME:$USERNAME" | chpasswd \
-    && adduser $USERNAME sudo 
-    # start services
+RUN set -eux; \
+    && groupadd --gid $USER_GID $USER_NAME \
+    && useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME -m $USER_NAME \
+    && echo "$USER_NAME:$USER_NAME" | chpasswd \
+    && adduser $USER_NAME sudo 
+# start services
 # RUN update-rc.d dbus enable
 
 # USER default_user
-USER $USERNAME
+USER $USER_NAME
 
 # add rust demo project
+ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput
 # init cargo project
 # change to home_directory
-RUN cd && \ 
-    mkdir rust_work_space && \
-    cd $_
-ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput 
-RUN mkdir $RUST_PROJECT_DIR && \
-    cargo init $RUST_PROJECT_DIR && \
-    cd $RUST_PROJECT_DIR && \
-    cargo add tokio && \
-    cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract && \
-    cargo build && \
-    cargo run
-
-RUN cd $RUST_PROJECT_DIR && \
-    mkdir ./examples
+RUN set -eux; \
+    &&  mkdir /home/$USER_NAME/rust_work_space \
+    &&  cd $_ \
+    &&  mkdir $RUST_PROJECT_DIR  \
+    &&  cargo init $RUST_PROJECT_DIR  \
+    &&  cd $RUST_PROJECT_DIR  \
+    &&  cargo add tokio  \
+    &&  cargo add tokio thirtyfour color-eyre sxd-document sxd-xpath table-extract  \
+    &&  cargo build \
+    &&  cargo run \
+    &&  cd $RUST_PROJECT_DIR \
+    &&  mkdir ./examples
 
 # copy
 COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs 
 
 # add new entry to file e.g. Cargo.toml
-RUN tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<EOT
+RUN set -eux; \
+    && tee -a /home/default_user/rust_work_space/tokio_finviz_shortput/Cargo.toml > /dev/null <<EOT
 #
 [[example]]
 name = "tokio_finviz"
-EOT
+EOT \
+&& cd $RUST_PROJECT_DIR \
+&& cargo build --example tokio_finviz
 
-RUN cd $RUST_PROJECT_DIR \
-    cargo build --example tokio_finviz
-
-ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
+ENTRYPOINT ["/bin/bash"]
+# ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
 # --enable-unsafe-webgpu --enable-features=Vulkan --use-vulkan=swiftshader --use-webgpu-adapter=swiftshader --no-sandbox
 # ENTRYPOINT ["set MESA_LOADER_DRIVER_OVERRIDE=\"i915\"","&&","google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
 # ENV MESA_LOADER_DRIVER_OVERRIDE=i915
