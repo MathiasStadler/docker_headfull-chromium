@@ -11,12 +11,18 @@ RUN apt-get update \
     # change to root
     sudo \
     build-essential \
+    libx11-xcb1  # nessery for chrome \
+    libgl1-mesa-dri # nessery for chrome too \
+    libcanberra-gtk-module # nessery for chrome too \
+    libasound2 \
+    init-system-helpers # nessery update-rc.d \
     # Set the Chrome repo.
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
     && apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
+    # && apt-get install --no-install-recommends --no-install-suggests --yes google-chrome-stable \
+    && apt-get install --yes google-chrome-stable \
     && apt-get clean \ 
     && rm -rf /var/lib/apt/lists/*
 
@@ -80,9 +86,9 @@ ARG USER_GID=$USER_UID
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID --password $USERNAME -m $USERNAME \
     && echo "$USERNAME:$USERNAME" | chpasswd \
-    && adduser $USERNAME sudo \
+    && adduser $USERNAME sudo 
     # start services
-    && update-rc.d dbus enable
+# RUN update-rc.d dbus enable
 
 # USER default_user
 USER $USERNAME
@@ -119,3 +125,7 @@ RUN cd $RUST_PROJECT_DIR \
     cargo build --example tokio_finviz
 
 ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
+# --enable-unsafe-webgpu --enable-features=Vulkan --use-vulkan=swiftshader --use-webgpu-adapter=swiftshader --no-sandbox
+# ENTRYPOINT ["set MESA_LOADER_DRIVER_OVERRIDE=\"i915\"","&&","google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
+# ENV MESA_LOADER_DRIVER_OVERRIDE=i915
+# ENTRYPOINT ["google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
