@@ -2,22 +2,27 @@
 FROM ubuntu:23.10
 
 # Install chrome => one layer
-RUN set -e, -u, -x, -o pipefail; \
-    && apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests --yes curl \
-    ca-certificates # ca certificate for https\
+RUN \
+    ["/bin/bash", "-c", "set -o pipefail  && \
+    #set -e, -u, -x, -o pipefail; \
+    apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests --yes  \
+    # && apt-get install --no-install-recommends  --yes curl \
+    curl \
+    ca-certificates  \
     wget \
     gnupg \
     unzip \
-    sudo # change to root\
+    sudo  \
     build-essential \
-    libx11-xcb1  # nessery for chrome \
-    libgl1-mesa-dri # nessery for chrome too \
-    libcanberra-gtk-module # nessery for chrome too \
-    libasound2 # sound out of docker\
-    init-system-helpers # nessery update-rc.d \
-    # Set the Chrome repo.
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    libx11-xcb1 \
+    libgl1-mesa-dri \
+    libcanberra-gtk-module  \
+    libasound2 \
+    init-system-helpers"]
+
+# Set the Chrome repo.
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
     && apt-get update \
@@ -123,8 +128,8 @@ name = "tokio_finviz"
 EOF
 
 RUN RUN set -e, -u, -x, -o pipefail; \
-&& cd $RUST_PROJECT_DIR \
-&& cargo build --example tokio_finviz
+    && cd $RUST_PROJECT_DIR \
+    && cargo build --example tokio_finviz
 
 ENTRYPOINT ["/bin/bash"]
 # ENTRYPOINT ["google-chrome","--no-sandbox","--disable-features=dbus"]
