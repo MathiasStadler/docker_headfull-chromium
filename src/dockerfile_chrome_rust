@@ -3,11 +3,9 @@ FROM ubuntu:23.10
 
 # Install chrome => one layer
 RUN \
-    ["/bin/bash", "-c", "set -o pipefail  && \
-    #set -e, -u, -x, -o pipefail; \
-    apt-get update \
+    ["/bin/bash", "-c", "set -euxo pipefail \
+    && apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests --yes  \
-    # && apt-get install --no-install-recommends  --yes curl \
     curl \
     ca-certificates  \
     wget \
@@ -19,17 +17,21 @@ RUN \
     libgl1-mesa-dri \
     libcanberra-gtk-module  \
     libasound2 \
-    init-system-helpers"]
+    init-system-helpers \
+    " ]
 
 # Set the Chrome repo.
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+RUN \
+    ["/bin/bash", "-c", "set -euxo pipefail \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo \"deb http://dl.google.com/linux/chrome/deb/ stable main\" >> /etc/apt/sources.list.d/google.list \
     # Install Chrome.
     && apt-get update \
     && apt-get install --yes --no-install-recommends --no-install-suggests  google-chrome-stable \
     && apt-get --yes autoremove \
     && apt-get --yes clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    " ]
 
 
 # install rust
@@ -38,27 +40,33 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.73.0
 
-RUN set -e, -u, -x, -o pipefail; \
-    dpkgArch="$(dpkg --print-architecture)"; \
+RUN \
+    ["/bin/bash", "-c", "set -euxo pipefail \
+    && dpkgArch="$(dpkg --print-architecture)"; \
     case "${dpkgArch##*-}" in \
     amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
     armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='f21c44b01678c645d8fbba1e55e4180a01ac5af2d38bcbd14aa665e0d96ed69a' ;; \
     arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
     i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='e7b0f47557c1afcd86939b118cbcf7fb95a5d1d917bdd355157b63ca00fc4333' ;; \
-    *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
+    *) echo >&2 \"unsupported architecture: ${dpkgArch}\"; exit 1 ;; \
     esac; \
-    url="https://static.rust-lang.org/rustup/archive/1.26.0/${rustArch}/rustup-init"; \
-    wget "$url"; \
-    echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
-    chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
-    rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    " ]
+
+RUN \
+    ["/bin/bash", "-c", "set -euxo pipefail \
+    && url=\"https://static.rust-lang.org/rustup/archive/1.26.0/${rustArch}/rustup-init\"; \
+    && wget \"$url\"; \
+    && echo \"${rustupSha256} *rustup-init\" | sha256sum -c -; \
+    && chmod +x rustup-init; \
+    && ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
+    && rm rustup-init; \
+    && chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
     # rustup --version; \
     # cargo --version; \
     # rustc --version; \
-    rustup self update; \
-    rustup update;
+    && rustup self update; \
+    && rustup update; \
+    " ]
 
 # install chromedriver
 
