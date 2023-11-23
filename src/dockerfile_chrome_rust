@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.6.0
 FROM ubuntu:23.10
 
+
 # Install chrome => one layer
 RUN \
     ["/bin/bash", "-c", "set -euxo pipefail \
