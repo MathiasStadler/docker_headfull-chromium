@@ -1,0 +1,9 @@
+# syntax=docker/dockerfile:1.6.0
+FROM ubuntu:23.10
+
+# https://github.com/moby/moby/pull/7489#issuecomment-816858450
+SHELL ["/bin/bash", "-c"]
+RUN help | head -1
+
+# run docker biuld
+# docker build . -t my_ubuntu_bash -f ./src/dockerfile_bash --no-cache --progress=plain

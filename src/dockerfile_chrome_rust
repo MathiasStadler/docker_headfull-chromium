@@ -1,78 +1,77 @@
-# syntax=docker/dockerfile:1.6.0
+# syntax=docker/dockerfile:1
 FROM ubuntu:23.10
 
+# build
+# docker buildx build --progress=plain . -t my_ubuntu_chrome_rust_3 -f ./src/dockerfile_chrome_rust
 
-# Install chrome => one layer
+SHELL ["/bin/bash", "-c"]
+RUN help | head -1
+
+# Install form google-chrome => one layer
+
+
 RUN \
-    ["/bin/bash", "-c", "set -euxo pipefail \
-    && apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests --yes  \
-    curl \
-    ca-certificates  \
-    wget \
-    gnupg \
-    unzip \
-    sudo  \
+    set -euxo pipefail; \
+    apt-get update \
+    && apt-get install --yes --no-install-recommends --no-install-suggests   \
     build-essential \
-    libx11-xcb1 \
-    libgl1-mesa-dri \
-    libcanberra-gtk-module  \
-    libasound2 \
+    ca-certificates  \
+    curl \
+    gnupg \
     init-system-helpers \
-    " ]
-ENV addr "deb http://dl.google.com/linux/chrome/deb/ stable main"
+    libasound2 \
+    libcanberra-gtk-module  \
+    libgl1-mesa-dri \
+    libx11-xcb1 \
+    sudo  \
+    unzip \
+    wget 
 
-# Set the Chrome repo.
-RUN \
-    ["/bin/bash", "-c", "set -euxo pipefail", \
-    " wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - " ,\
-    " echo ${addr} >> /etc/apt/sources.list.d/google.list" \
-    ]
 
-# Set the Chrome repo.
+# double
+# ADD google_chrome key 
+#RUN \
+#    set -euxo pipefail \
+#    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+#    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list 
+
+
+# Set up the google-chrome repo and install
 RUN \
-    ["/bin/bash", "-c", "set -euxo pipefail \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo \"deb http://dl.google.com/linux/chrome/deb/ stable main\" >> /etc/apt/sources.list.d/google.list \
-    # Install Chrome.
+    set -euxo pipefail; \
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
-    && apt-get install --yes --no-install-recommends --no-install-suggests  google-chrome-stable \
+    && apt-get --yes install google-chrome-stable \
     && apt-get --yes autoremove \
     && apt-get --yes clean \
-    && rm -rf /var/lib/apt/lists/* \
-    " ]
-
-
-
-
-
-
+    && rm -rf /var/lib/apt/lists/* 
 
 # install chromedriver
-
-# ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
+ENV CHROME_VERSION = $(google-chrome  --product-version | awk '{print $1}' |awk -F. '{print $1}')
 ENV CHROMEDRIVER_DIR=/chromedriver \
     DOWNLOAD_DIR=/DOWNLOAD
 
-RUN set -e, -u, -x, -o pipefail; \ 
+RUN set -euxo pipefail; \ 
     mkdir ${CHROMEDRIVER_DIR} \
     && mkdir ${DOWNLOAD_DIR} \ 
     && curl --output ${DOWNLOAD_DIR}/chromedriver-linux64.zip  "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/119.0.6045.159/linux64/chromedriver-linux64.zip" \
     && unzip ${DOWNLOAD_DIR}/chromedriver-linux64.zip -d ${CHROMEDRIVER_DIR}
 
 
+# install rust
 
 
 #create user
 ARG USER_NAME=default_user \
     USER_UID=1999 \
-    USER_GID=$USER_UID
+    USER_GID=1999
 
-RUN set -e, -u, -x, -o pipefail; \
-    && groupadd --gid $USER_GID $USER_NAME \
-    && useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME -m $USER_NAME \
-    && echo "$USER_NAME:$USER_NAME" | chpasswd \
-    && adduser $USER_NAME sudo 
+RUN set -euxo pipefail; 
+RUN    groupadd --gid $USER_GID $USER_NAME 
+RUN    useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME -m $USER_NAME 
+RUN    echo "$USER_NAME:$USER_NAME" | chpasswd 
+RUN    adduser $USER_NAME sudo 
 # start services
 # RUN update-rc.d dbus enable
 
@@ -83,8 +82,8 @@ USER $USER_NAME
 ENV RUST_PROJECT_DIR=/home/default_user/rust_work_space/tokio_finviz_shortput
 # init cargo project
 # change to home_directory
-RUN set -e, -u, -x, -o pipefail; \
-    &&  mkdir /home/$USER_NAME/rust_work_space \
+RUN set -euxo pipefail; \
+    mkdir /home/$USER_NAME/rust_work_space \
     &&  cd $_ \
     &&  mkdir $RUST_PROJECT_DIR  \
     &&  cargo init $RUST_PROJECT_DIR  \
