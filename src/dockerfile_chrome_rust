@@ -14,6 +14,7 @@ RUN \
     set -euxo pipefail; \
     apt-get update \
     && apt-get install --yes --no-install-recommends --no-install-suggests   \
+    apparmor-profiles \
     build-essential \
     ca-certificates  \
     curl \
@@ -73,11 +74,11 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 RUN set -eux; \
     dpkgArch="$(dpkg --print-architecture)"; \
     case "${dpkgArch##*-}" in \
-        amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
-        armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='f21c44b01678c645d8fbba1e55e4180a01ac5af2d38bcbd14aa665e0d96ed69a' ;; \
-        arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
-        i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='e7b0f47557c1afcd86939b118cbcf7fb95a5d1d917bdd355157b63ca00fc4333' ;; \
-        *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
+    amd64) rustArch='x86_64-unknown-linux-gnu'; rustupSha256='0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db' ;; \
+    armhf) rustArch='armv7-unknown-linux-gnueabihf'; rustupSha256='f21c44b01678c645d8fbba1e55e4180a01ac5af2d38bcbd14aa665e0d96ed69a' ;; \
+    arm64) rustArch='aarch64-unknown-linux-gnu'; rustupSha256='673e336c81c65e6b16dcdede33f4cc9ed0f08bde1dbe7a935f113605292dc800' ;; \
+    i386) rustArch='i686-unknown-linux-gnu'; rustupSha256='e7b0f47557c1afcd86939b118cbcf7fb95a5d1d917bdd355157b63ca00fc4333' ;; \
+    *) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;; \
     esac; \
     url="https://static.rust-lang.org/rustup/archive/1.26.0/${rustArch}/rustup-init"; \
     wget "$url"; \
@@ -154,14 +155,14 @@ COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs
 # ENTRYPOINT ["set MESA_LOADER_DRIVER_OVERRIDE=\"i915\"","&&","google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
 # ENV MESA_LOADER_DRIVER_OVERRIDE=i915
 RUN set -euxo pipefail; \
-export DISPLAY=172.19.48.1:0 \
-sudo service dbus start \
-export XDG_RUNTIME_DIR=/run/user/$(id -u) \
-sudo mkdir $XDG_RUNTIME_USER \
-sudo chmod 700 $XDG_RUNTIME_DIR \
-sudo chown $(id -un):$(id -gn) $XDG_RUNTIME_DIR \
-export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus \
-dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only & 
+    export DISPLAY=172.19.48.1:0 \
+    sudo service dbus start \
+    export XDG_RUNTIME_DIR=/run/user/$(id -u) \
+    sudo mkdir $XDG_RUNTIME_USER \
+    sudo chmod 700 $XDG_RUNTIME_DIR \
+    sudo chown $(id -un):$(id -gn) $XDG_RUNTIME_DIR \
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus \
+    dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only & 
 
 #FROM HERE
 #  https://stackoverflow.com/questions/70422318/getting-failed-to-connect-to-the-bus-could-not-parse-server-address-error-whe
