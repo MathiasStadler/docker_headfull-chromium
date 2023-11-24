@@ -14,7 +14,7 @@ RUN \
     set -euxo pipefail; \
     apt-get update \
     && apt-get install --yes --no-install-recommends --no-install-suggests   \
-    apparmor-profiles \
+    apparmor \
     build-essential \
     ca-certificates  \
     curl \
