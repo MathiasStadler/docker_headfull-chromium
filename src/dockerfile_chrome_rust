@@ -42,6 +42,9 @@ RUN \
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
+    && apt-get install --yes --no-install-recommends --no-install-suggests \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module \
     && apt-get --yes install google-chrome-stable \
     && apt-get --yes autoremove \
     && apt-get --yes clean \
@@ -93,11 +96,11 @@ ARG USER_NAME=default_user \
     USER_UID=1999 \
     USER_GID=1999
 
-RUN set -euxo pipefail; 
-RUN    groupadd --gid $USER_GID $USER_NAME 
-RUN    useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME -m $USER_NAME 
-RUN    echo "$USER_NAME:$USER_NAME" | chpasswd 
-RUN    adduser $USER_NAME sudo 
+RUN set -euxo pipefail; \
+    groupadd --gid $USER_GID $USER_NAME \
+    && useradd --uid $USER_UID --gid $USER_GID --password $USER_NAME --create-home $USER_NAME --shell /bin/bash \
+    && echo "$USER_NAME:$USER_NAME" | chpasswd \
+    && adduser $USER_NAME sudo 
 # start services
 # RUN update-rc.d dbus enable
 
@@ -150,4 +153,23 @@ COPY ./src/tokio_finviz.rs $RUST_PROJECT_DIR/examples/tokio_finviz.rs
 # --enable-unsafe-webgpu --enable-features=Vulkan --use-vulkan=swiftshader --use-webgpu-adapter=swiftshader --no-sandbox
 # ENTRYPOINT ["set MESA_LOADER_DRIVER_OVERRIDE=\"i915\"","&&","google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
 # ENV MESA_LOADER_DRIVER_OVERRIDE=i915
-ENTRYPOINT ["google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
+RUN set -euxo pipefail; \
+export DISPLAY=172.19.48.1:0 \
+sudo service dbus start \
+export XDG_RUNTIME_DIR=/run/user/$(id -u) \
+sudo mkdir $XDG_RUNTIME_USER \
+sudo chmod 700 $XDG_RUNTIME_DIR \
+sudo chown $(id -un):$(id -gn) $XDG_RUNTIME_DIR \
+export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus \
+dbus-daemon --session --address=$DBUS_SESSION_BUS_ADDRESS --nofork --nopidfile --syslog-only & 
+
+#FROM HERE
+#  https://stackoverflow.com/questions/70422318/getting-failed-to-connect-to-the-bus-could-not-parse-server-address-error-whe
+ENV DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+
+# USER default_user
+USER $USERNAME
+
+# ENTRYPOINT ["google-chrome","--enable-unsafe-webgpu", "--enable-features=Vulkan","--use-vulkan=swiftshader","--use-webgpu","-adapter=swiftshader","--no-sandbox","--disable-features=dbus"]
+# ENTRYPOINT ["google-chrome","--no-sandbox","--disable-gpu","--disable-features=dbus","--enable-gpu-rasterization"]
+ENTRYPOINT ["google-chrome","--no-sandbox","--disable-gpu","--enable-gpu-rasterization"]
